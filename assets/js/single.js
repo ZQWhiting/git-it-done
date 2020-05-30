@@ -1,30 +1,48 @@
 const issueContainerEl = document.querySelector('#issues-container')
 const limitWarningEl = document.querySelector('#limit-warning');
+const repoNameEl = document.querySelector('#repo-name')
+
+const getRepoName = function () {
+    // grab repo name from url query string
+    const queryString = document.location.search;
+    const repoName = queryString.split('=')[1];
+
+    if (repoName) {
+        // display repo name on the page
+        repoNameEl.textContent = repoName;
+
+        getRepoIssues(repoName);
+    } else {
+        // if no repo name was given, redirect to the homepage
+        document.location.replace('./index.html');
+    }
+};
 
 const getRepoIssues = function (repo) {
     const apiUrl = `https://api.github.com/repos/${repo}/issues?direction=asc`;
 
     fetch(apiUrl)
-    .then(function (response) {
-        if (response.ok) {
-            response.json().then(function (data) {
-                displayIssues(data);
+        .then(function (response) {
+            if (response.ok) {
+                response.json().then(function (data) {
+                    displayIssues(data);
 
-                // check if api has paginated issues
-                if (response.headers.get('Link')) {
-                    displayWarning(repo);
-                }
-            });
-        } else {
-            alert(`There was a problem with your request!`)
-        }
-    })
-    .catch(function (error) {
-        alert(`Error`);
-    });
+                    // check if api has paginated issues
+                    if (response.headers.get('Link')) {
+                        displayWarning(repo);
+                    }
+                });
+            } else {
+                // if not successful, redirect to homepage
+                document.location.replace('./index.html');
+            }
+        })
+        .catch(function (error) {
+            alert(`Error`);
+        });
 };
 
-const displayIssues = function(issues) {
+const displayIssues = function (issues) {
     if (issues.length === 0) {
         issueContainerEl.textContent = `This repo has no open issues!`;
         return;
@@ -36,6 +54,7 @@ const displayIssues = function(issues) {
         issueEl.setAttribute('target', '_blank');
 
         const titleEl = document.createElement('span');
+        titleEl.textContent = issues[i].title;
         issueEl.appendChild(titleEl);
 
         const typeEl = document.createElement('span')
@@ -57,6 +76,6 @@ const displayWarning = function (repo) {
     linkEl.setAttribute('href', `https://github.com/${repo}/issues`);
     linkEl.setAttribute('target', '_blank');
     limitWarningEl.appendChild(linkEl);
-}
+};
 
-getRepoIssues("facebook/react");
+getRepoName();
